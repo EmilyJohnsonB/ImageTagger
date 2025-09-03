@@ -46,38 +46,90 @@ const ImageUpload: React.FC = () => {
     }
   };
 
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const files = event.dataTransfer.files;
+    if (files && files.length > 0) {
+      handleFilesUpload(Array.from(files));
+    }
+  };
+
+  const handleFilesUpload = async (files: File[]) => {
+    setUploading(true);
+    setError('');
+
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('images', file);
+    });
+
+    try {
+      const response = await fetch('/api/upload/images', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      setUploadedFiles(prev => [...prev, ...result.files]);
+    } catch (err) {
+      setError('Failed to upload images. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="upload-container">
       <h2>Upload Images</h2>
       
-      <div style={{ marginBottom: '20px' }}>
+      <div
+        className={`upload-area ${uploading ? 'disabled' : ''}`}
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+        onClick={() => document.getElementById('file-input')?.click()}
+      >
         <input
+          id="file-input"
+          className="file-input"
           type="file"
           multiple
           accept="image/*"
           onChange={handleFileSelect}
           disabled={uploading}
-          style={{ marginBottom: '10px' }}
         />
-        {uploading && <p>Uploading...</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        
+        {uploading ? (
+          <div className="loading">Uploading...</div>
+        ) : (
+          <div>
+            <p>Click to select files or drag and drop images here</p>
+            <button className="upload-btn">Choose Files</button>
+          </div>
+        )}
       </div>
+
+      {error && <div className="error">{error}</div>}
 
       {uploadedFiles.length > 0 && (
         <div>
-          <h3>Uploaded Images</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '15px' }}>
+          <h3>Recently Uploaded</h3>
+          <div className="image-grid">
             {uploadedFiles.map((file) => (
-              <div key={file.id} style={{ border: '1px solid #ddd', padding: '10px', borderRadius: '4px' }}>
+              <div key={file.id} className="image-card">
                 <img
                   src={file.path}
                   alt={file.originalName}
-                  style={{ width: '100%', height: '150px', objectFit: 'cover', marginBottom: '8px' }}
                 />
-                <p style={{ fontSize: '12px', margin: '0' }}>{file.originalName}</p>
-                <p style={{ fontSize: '10px', color: '#666', margin: '0' }}>
-                  {Math.round(file.size / 1024)} KB
-                </p>
+                <div className="image-info">
+                  <p className="image-name">{file.originalName}</p>
+                  <p className="image-size">{Math.round(file.size / 1024)} KB</p>
+                </div>
               </div>
             ))}
           </div>
