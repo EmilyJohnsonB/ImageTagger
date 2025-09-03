@@ -2,6 +2,7 @@ node_modules/
 .env
 .claude
 *.log
+data/
 dist/
 CLAUDE.md
 build/
