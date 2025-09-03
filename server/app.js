@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 
 const uploadRoutes = require('./routes/upload');
+const tagRoutes = require('./routes/tags');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,6 +17,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
 app.use('/api/upload', uploadRoutes);
+app.use('/api/tags', tagRoutes);
 
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is running!' });
